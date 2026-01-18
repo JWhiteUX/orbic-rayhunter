@@ -185,6 +185,8 @@ To kill a background tunnel:
 pkill -f "ssh -fN.*8080:192.168.1.1"
 ```
 
+> **Note:** Background tunnels run indefinitely until killed. Remember to close them when not in use, as they provide network access to the Orbic's admin interfaces.
+
 ## Configuration
 
 Configuration via environment variables:
