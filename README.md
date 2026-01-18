@@ -46,11 +46,11 @@ This script runs a local ntfy server on any Linux host (Raspberry Pi, laptop, et
 
 ```bash
 # Download
-curl -LO https://raw.githubusercontent.com/YOUR_USERNAME/orbic-rayhunter/main/orbic-rayhunter
-chmod +x orbic-rayhunter
+curl -LO https://raw.githubusercontent.com/JWhiteUX/orbic-rayhunter/main/orbic-rayhunter.sh
+chmod +x orbic-rayhunter.sh
 
 # Install to PATH
-sudo ./orbic-rayhunter install
+sudo ./orbic-rayhunter.sh install
 ```
 
 ### Install ntfy (on your Linux host)
@@ -72,13 +72,13 @@ sudo mv ntfy_2.11.0_linux_amd64/ntfy /usr/local/bin/
 ## Usage
 
 ```bash
-orbic-rayhunter start      # Start ntfy server, show config URLs
-orbic-rayhunter stop       # Stop ntfy server
-orbic-rayhunter status     # Show component status
-orbic-rayhunter test       # Send test notification
-orbic-rayhunter logs       # Tail ntfy server logs
-orbic-rayhunter tunnel     # Show SSH tunnel commands for remote access
-orbic-rayhunter --help     # Show help
+./orbic-rayhunter.sh start      # Start ntfy server, show config URLs
+./orbic-rayhunter.sh stop       # Stop ntfy server
+./orbic-rayhunter.sh status     # Show component status
+./orbic-rayhunter.sh test       # Send test notification
+./orbic-rayhunter.sh logs       # Tail ntfy server logs
+./orbic-rayhunter.sh tunnel     # Show SSH tunnel commands for remote access
+./orbic-rayhunter.sh --help     # Show help
 ```
 
 ## Quick Start
@@ -90,7 +90,7 @@ orbic-rayhunter --help     # Show help
 
 3. **Start the bridge**
    ```bash
-   orbic-rayhunter start
+   ./orbic-rayhunter.sh start
    ```
    
    Output:
@@ -119,7 +119,7 @@ orbic-rayhunter --help     # Show help
 
 6. **Test**
    ```bash
-   orbic-rayhunter test
+   ./orbic-rayhunter.sh test
    ```
 
 ## Remote Access
@@ -129,7 +129,7 @@ The Orbic's web interfaces (Rayhunter UI and OEM Admin) are only directly access
 ### Get Tunnel Commands
 
 ```bash
-orbic-rayhunter tunnel
+./orbic-rayhunter.sh tunnel
 ```
 
 Output:
@@ -159,7 +159,7 @@ Background tunnel (add -fN):
 
 ### Example: Access from MacBook
 
-1. On your Linux host (e.g., Raspberry Pi), run `orbic-rayhunter tunnel` to get the SSH command
+1. On your Linux host (e.g., Raspberry Pi), run `./orbic-rayhunter.sh tunnel` to get the SSH command
 
 2. On your MacBook, open Terminal and run:
    ```bash
@@ -170,7 +170,7 @@ Background tunnel (add -fN):
    - **Rayhunter UI**: http://localhost:8080
    - **Orbic OEM Admin**: http://localhost:8081
 
-4. In Rayhunter UI, paste the ntfy URL from `orbic-rayhunter start` output
+4. In Rayhunter UI, paste the ntfy URL from `./orbic-rayhunter.sh start` output
 
 ### Background Tunnel
 
@@ -200,7 +200,7 @@ Configuration via environment variables:
 
 Example with custom topic:
 ```bash
-ORBIC_NTFY_TOPIC=my-alerts orbic-rayhunter start
+ORBIC_NTFY_TOPIC=my-alerts ./orbic-rayhunter.sh start
 ```
 
 ## Network Diagram
@@ -258,8 +258,8 @@ Data flow:
 ### ntfy won't start
 
 - Check if port is in use: `ss -tlnp | grep 8080`
-- View logs: `orbic-rayhunter logs` or `cat /tmp/orbic-rayhunter-ntfy.log`
-- Try a different port: `ORBIC_NTFY_PORT=9090 orbic-rayhunter start`
+- View logs: `./orbic-rayhunter.sh logs` or `cat /tmp/orbic-rayhunter-ntfy.log`
+- Try a different port: `ORBIC_NTFY_PORT=9090 ./orbic-rayhunter.sh start`
 
 ### Can't access Rayhunter UI remotely
 
@@ -277,8 +277,8 @@ Data flow:
 ## Uninstall
 
 ```bash
-orbic-rayhunter stop
-sudo orbic-rayhunter uninstall
+./orbic-rayhunter.sh stop
+sudo ./orbic-rayhunter.sh uninstall
 ```
 
 ## Related Projects
