@@ -11,8 +11,9 @@ NTFY_TOPIC="${ORBIC_NTFY_TOPIC:-rayhunter}"
 ORBIC_GATEWAY="${ORBIC_GATEWAY:-192.168.1.1}"
 RAYHUNTER_PORT="${ORBIC_RAYHUNTER_PORT:-8080}"
 ORBIC_ADMIN_PORT="${ORBIC_ADMIN_PORT:-80}"
-NTFY_PID_FILE="/tmp/orbic-rayhunter-ntfy.pid"
-NTFY_LOG_FILE="/tmp/orbic-rayhunter-ntfy.log"
+_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp}"
+NTFY_PID_FILE="${_RUNTIME_DIR}/orbic-rayhunter-ntfy.pid"
+NTFY_LOG_FILE="${_RUNTIME_DIR}/orbic-rayhunter-ntfy.log"
 
 # Colors
 RED='\033[0;31m'
@@ -31,6 +32,26 @@ print_warn()  { echo -e "${YELLOW}$1${NC}"; }
 print_ok()    { echo -e "${GREEN}$1${NC}"; }
 print_info()  { echo -e "${CYAN}$1${NC}"; }
 
+# Read and validate PID from file. Returns the PID on stdout, or returns 1 if invalid.
+read_pid() {
+    local pid
+    [ -f "$NTFY_PID_FILE" ] || return 1
+    pid=$(cat "$NTFY_PID_FILE") || return 1
+    if [[ "$pid" =~ ^[0-9]+$ ]] && [ "$pid" -gt 0 ]; then
+        printf '%s' "$pid"
+        return 0
+    fi
+    return 1
+}
+
+# Verify a file path is safe to write (not a symlink). Removes symlinks and warns.
+safe_path_check() {
+    if [ -L "$1" ]; then
+        print_warn "Removing suspicious symlink at $1"
+        rm -f "$1"
+    fi
+}
+
 # Find the USB tethering interface connected to Orbic
 find_usb_interface() {
     local iface
@@ -38,7 +59,7 @@ find_usb_interface() {
         [ -e "$iface" ] || continue
         iface=$(basename "$iface")
         # Check if this interface has a route to the Orbic gateway
-        if ip route show dev "$iface" 2>/dev/null | grep -q "$ORBIC_GATEWAY"; then
+        if ip route show dev "$iface" 2>/dev/null | grep -Fq "$ORBIC_GATEWAY"; then
             echo "$iface"
             return 0
         fi
@@ -83,7 +104,8 @@ check_rayhunter_running() {
 }
 
 is_ntfy_running() {
-    [ -f "$NTFY_PID_FILE" ] && kill -0 "$(cat "$NTFY_PID_FILE")" 2>/dev/null
+    local pid
+    pid=$(read_pid) && kill -0 "$pid" 2>/dev/null
 }
 
 check_dependencies() {
@@ -151,15 +173,20 @@ cmd_start() {
     
     # Start ntfy if not running
     if is_ntfy_running; then
-        print_warn "ntfy already running (PID: $(cat "$NTFY_PID_FILE"))"
+        print_warn "ntfy already running (PID: $(read_pid))"
     else
         print_info "Starting ntfy server on port $NTFY_PORT..."
-        ntfy serve --listen-http ":$NTFY_PORT" --behind-proxy --no-log-dates &>"$NTFY_LOG_FILE" &
-        echo $! > "$NTFY_PID_FILE"
+        safe_path_check "$NTFY_LOG_FILE"
+        safe_path_check "$NTFY_PID_FILE"
+        : > "$NTFY_LOG_FILE"
+        chmod 600 "$NTFY_LOG_FILE"
+        ntfy serve --listen-http ":$NTFY_PORT" --behind-proxy --no-log-dates >>"$NTFY_LOG_FILE" 2>&1 &
+        echo "$!" > "$NTFY_PID_FILE"
+        chmod 600 "$NTFY_PID_FILE"
         sleep 1
-        
+
         if is_ntfy_running; then
-            print_ok "ntfy started (PID: $(cat "$NTFY_PID_FILE"))"
+            print_ok "ntfy started (PID: $(read_pid))"
         else
             print_error "Failed to start ntfy. Check $NTFY_LOG_FILE"
             exit 1
@@ -194,8 +221,8 @@ cmd_stop() {
     
     if [ -f "$NTFY_PID_FILE" ]; then
         local pid
-        pid=$(cat "$NTFY_PID_FILE")
-        if kill -0 "$pid" 2>/dev/null; then
+        pid=$(read_pid)
+        if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
             print_info "Stopping ntfy (PID: $pid)..."
             kill "$pid"
             rm -f "$NTFY_PID_FILE"
@@ -243,7 +270,7 @@ cmd_status() {
     
     # ntfy
     if is_ntfy_running; then
-        echo -e "ntfy Server:    ${GREEN}Running (PID: $(cat "$NTFY_PID_FILE"))${NC}"
+        echo -e "ntfy Server:    ${GREEN}Running (PID: $(read_pid))${NC}"
     else
         echo -e "ntfy Server:    ${RED}Not running${NC}"
     fi
@@ -281,7 +308,7 @@ cmd_test() {
     local response
     response=$(curl -s -d "Rayhunter test $(date '+%Y-%m-%d %H:%M:%S')" "http://$usb_ip:$NTFY_PORT/$NTFY_TOPIC")
     
-    if echo "$response" | grep -q '"id"'; then
+    if echo "$response" | grep -Fq '"id"'; then
         print_ok "Notification sent! Check your ntfy app."
     else
         print_error "Failed to send notification"

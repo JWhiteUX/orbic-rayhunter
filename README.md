@@ -10,7 +10,7 @@ Rayhunter runs on an Orbic mobile hotspot and can send push notifications via [n
 
 ## The Solution
 
-```
+```text
 ┌─────────────┐     USB      ┌─────────────┐      LAN       ┌─────────────┐
 │   Orbic     │─────────────▶│  Linux Host │───────────────▶│   Phone     │
 │ (Rayhunter) │  Tethering   │ (ntfy srv)  │   (Wi-Fi/Eth)  │ (ntfy app)  │
@@ -89,12 +89,14 @@ sudo mv ntfy_2.11.0_linux_amd64/ntfy /usr/local/bin/
    - Settings → Network & Internet → Hotspot & Tethering → USB Tethering
 
 3. **Start the bridge**
+
    ```bash
    ./orbic-rayhunter.sh start
    ```
-   
+
    Output:
-   ```
+
+   ```text
    === Orbic Rayhunter Setup ===
    
    USB interface: usb0 (192.168.1.113)
@@ -118,6 +120,7 @@ sudo mv ntfy_2.11.0_linux_amd64/ntfy /usr/local/bin/
    - Add subscription with the "Phone subscription URL"
 
 6. **Test**
+
    ```bash
    ./orbic-rayhunter.sh test
    ```
@@ -133,7 +136,8 @@ The Orbic's web interfaces (Rayhunter UI and OEM Admin) are only directly access
 ```
 
 Output:
-```
+
+```text
 === SSH Tunnel Commands ===
 
 Run one of these commands from another computer on your network
@@ -162,6 +166,7 @@ Background tunnel (add -fN):
 1. On your Linux host (e.g., Raspberry Pi), run `./orbic-rayhunter.sh tunnel` to get the SSH command
 
 2. On your MacBook, open Terminal and run:
+
    ```bash
    ssh -L 8080:192.168.1.1:8080 -L 8081:192.168.1.1:80 user@<HOST_IP>
    ```
@@ -181,6 +186,7 @@ ssh -fN -L 8080:192.168.1.1:8080 -L 8081:192.168.1.1:80 user@<HOST_IP>
 ```
 
 To kill a background tunnel:
+
 ```bash
 pkill -f "ssh -fN.*8080:192.168.1.1"
 ```
@@ -201,13 +207,14 @@ Configuration via environment variables:
 | `ORBIC_SSH_USER` | current user | SSH username for tunnel command |
 
 Example with custom topic:
+
 ```bash
 ORBIC_NTFY_TOPIC=my-alerts ./orbic-rayhunter.sh start
 ```
 
 ## Network Diagram
 
-```
+```text
                                     Your Local Network
                                     ==================
                                     
@@ -260,7 +267,7 @@ Data flow:
 ### ntfy won't start
 
 - Check if port is in use: `ss -tlnp | grep 8080`
-- View logs: `./orbic-rayhunter.sh logs` or `cat /tmp/orbic-rayhunter-ntfy.log`
+- View logs: `./orbic-rayhunter.sh logs` or check the log file in `$XDG_RUNTIME_DIR` (or `/tmp`)
 - Try a different port: `ORBIC_NTFY_PORT=9090 ./orbic-rayhunter.sh start`
 
 ### Can't access Rayhunter UI remotely
@@ -273,8 +280,8 @@ Data flow:
 
 | Path | Description |
 |------|-------------|
-| `/tmp/orbic-rayhunter-ntfy.pid` | ntfy process ID |
-| `/tmp/orbic-rayhunter-ntfy.log` | ntfy server logs |
+| `$XDG_RUNTIME_DIR/orbic-rayhunter-ntfy.pid` | ntfy process ID (falls back to `/tmp` if unset) |
+| `$XDG_RUNTIME_DIR/orbic-rayhunter-ntfy.log` | ntfy server logs (falls back to `/tmp` if unset) |
 
 ## Uninstall
 
